@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusTime 数据测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .main {
+            width: 60%;
+            margin: 0 auto;
+            font-size: 11px;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+    <script>
+        // 测试 localStorage 功能
+        function testLocalStorage() {
+            const result = document.getElementById('localStorageResult');
+            try {
+                // 测试写入
+                const testData = {
+                    id: Date.now(),
+                    date: new Date().toISOString().split('T')[0],
+                    focusTime: 5.5,
+                    resultDescription: '测试数据'
+                };
+
+                localStorage.setItem('focusTimeData', JSON.stringify([testData]));
+
+                // 测试读取
+                const retrieved = localStorage.getItem('focusTimeData');
+                const parsed = JSON.parse(retrieved);
+
+                if (parsed.length > 0 && parsed[0].focusTime === 5.5) {
+                    result.innerHTML = '<p class="success">✅ localStorage 读写测试成功！</p>';
+                } else {
+                    result.innerHTML = '<p class="error">❌ localStorage 数据验证失败</p>';
+                }
+
+                updateCurrentDataDisplay();
+            } catch (error) {
+                result.innerHTML = `<p class="error">❌ localStorage 测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 导出测试数据
+        function exportTestData() {
+            const result = document.getElementById('importExportResult');
+            try {
+                const testData = [
+                    {
+                        id: 1,
+                        date: '2024-01-01',
+                        wakeUpTime: '07:00',
+                        bedTime: '23:00',
+                        focusTime: 6.5,
+                        resultDescription: '新年第一天，学习状态很好',
+                        isHoliday: true,
+                        isSpecialEvent: true,
+                        specialEventDescription: '元旦假期',
+                        createdAt: '2024-01-01T10:00:00.000Z'
+                    },
+                    {
+                        id: 2,
+                        date: '2024-01-02',
+                        wakeUpTime: '06:30',
+                        bedTime: '22:30',
+                        focusTime: 5.0,
+                        resultDescription: '恢复正常学习节奏',
+                        isHoliday: false,
+                        isSpecialEvent: false,
+                        specialEventDescription: '',
+                        createdAt: '2024-01-02T10:00:00.000Z'
+                    }
+                ];
+
+                const dataStr = JSON.stringify(testData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'focus-time-test-data.json';
+                link.click();
+
+                URL.revokeObjectURL(url);
+                result.innerHTML = '<p class="success">✅ 测试数据导出成功！</p>';
+            } catch (error) {
+                result.innerHTML = `<p class="error">❌ 导出失败: ${error.message}</p>`;
+            }
+        }
+
+        // 导入测试数据
+        function importTestData(event) {
+            const result = document.getElementById('importExportResult');
+            const file = event.target.files[0];
+
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        localStorage.setItem('focusTimeData', JSON.stringify(importedData));
+                        result.innerHTML = '<p class="success">✅ 测试数据导入成功！</p>';
+                        updateCurrentDataDisplay();
+                    } else {
+                        throw new Error('数据格式错误');
+                    }
+                } catch (error) {
+                    result.innerHTML = `<p class="error">❌ 导入失败: ${error.message}</p>`;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 更新当前数据显示
+        function updateCurrentDataDisplay() {
+            const currentDataEl = document.getElementById('currentData');
+            try {
+                const data = localStorage.getItem('focusTimeData');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    currentDataEl.textContent = JSON.stringify(parsed, null, 2);
+                } else {
+                    currentDataEl.textContent = '暂无数据';
+                }
+            } catch (error) {
+                currentDataEl.textContent = `数据解析错误: ${error.message}`;
+            }
+        }
+
+        // 页面加载时显示当前数据
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCurrentDataDisplay();
+        });
+
+        // 添加一些实用功能
+        function clearAllData() {
+            if (confirm('确定要清除所有数据吗？此操作不可恢复。')) {
+                localStorage.removeItem('focusTimeData');
+                updateCurrentDataDisplay();
+                alert('数据已清除');
+            }
+        }
+
+        function addSampleData() {
+            const sampleData = [
+                {
+                    id: Date.now(),
+                    date: new Date().toISOString().split('T')[0],
+                    wakeUpTime: '07:30',
+                    bedTime: '23:00',
+                    focusTime: 6.0,
+                    resultDescription: '今天学习了很多新知识，感觉很有收获',
+                    isHoliday: false,
+                    isSpecialEvent: false,
+                    specialEventDescription: '',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            localStorage.setItem('focusTimeData', JSON.stringify(sampleData));
+            updateCurrentDataDisplay();
+            alert('示例数据已添加');
+        }
+    </script>
+</head>
+
+<body>
+    <div class="main">
+        <h1>FocusTime 数据持久化测试</h1>
+
+        <div class="test-section">
+            <h2>测试 localStorage 功能</h2>
+            <button onclick="testLocalStorage()">测试 localStorage</button>
+            <div id="localStorageResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>测试数据导入/导出</h2>
+            <button onclick="exportTestData()">导出测试数据</button>
+            <input type="file" id="fileInput" accept=".json" onchange="importTestData(event)">
+            <div id="importExportResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>当前 localStorage 数据</h2>
+            <pre id="currentData"></pre>
+        </div>
+
+
+
+        <div class="test-section">
+            <h2>实用工具</h2>
+            <button onclick="clearAllData()">清除所有数据</button>
+            <button onclick="addSampleData()">添加今日示例数据</button>
+            <p><small>提示：这些操作会影响主应用的数据</small></p>
+        </div>
+
+        <div style="margin-top: 30px; padding: 15px; background: #e8f4f8; border-radius: 5px;">
+            <h3>测试说明</h3>
+            <ul>
+                <li><strong>localStorage 测试：</strong>验证浏览器本地存储功能是否正常</li>
+                <li><strong>数据导出：</strong>生成示例数据文件，可用于测试导入功能</li>
+                <li><strong>数据导入：</strong>选择 JSON 文件导入数据</li>
+                <li><strong>当前数据：</strong>显示 localStorage 中的实际数据</li>
+            </ul>
+            <p>返回主应用：<a href="/">FocusTime 应用</a></p>
+        </div>
+    </div>
+
+</body>
+
+</html>
