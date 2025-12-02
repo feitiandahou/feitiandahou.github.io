@@ -98,7 +98,7 @@
                   <span
                     v-if="!record.isHoliday && !record.isSpecialEvent"
                     class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500"
-                    >常</span
+                    >日常</span
                   >
                 </div>
               </td>
@@ -162,9 +162,8 @@ const handleFileSelect = (event: any) => {
 // 分页相关
 const pageSize = 13 // 每页显示的记录数
 let currentPage = ref(1)
-console.log(records.value)
 
-let totalPages = computed(() => Math.ceil(records.value.length / pageSize))
+const totalPages = computed(() => Math.max(1, Math.ceil(records.value.length / pageSize)))
 let paginatedRecords = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   const end = start + pageSize

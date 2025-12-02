@@ -11,7 +11,7 @@
       <div
         class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex flex-row sm:flex-col justify-between items-center sm:items-start"
       >
-        <div class="text-indigo-500 text-sm font-medium">总专注时长</div>
+        <div class="text-indigo-500 text-sm font-medium">月专注时长</div>
         <div class="text-2xl sm:text-3xl font-bold text-indigo-700">
           {{ totalHours }} <span class="text-sm font-normal">h</span>
         </div>
@@ -19,7 +19,7 @@
       <div
         class="bg-pink-50 p-4 rounded-xl border border-pink-100 flex flex-row sm:flex-col justify-between items-center sm:items-start"
       >
-        <div class="text-pink-500 text-sm font-medium">记录天数</div>
+        <div class="text-pink-500 text-sm font-medium">总记录天数</div>
         <div class="text-2xl sm:text-3xl font-bold text-pink-700">
           {{ dayCount }} <span class="text-sm font-normal">天</span>
         </div>
@@ -27,7 +27,7 @@
       <div
         class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex flex-row sm:flex-col justify-between items-center sm:items-start"
       >
-        <div class="text-emerald-500 text-sm font-medium">平均每日</div>
+        <div class="text-emerald-500 text-sm font-medium">本周平均每日(start at SunDay)</div>
         <div class="text-2xl sm:text-3xl font-bold text-emerald-700">
           {{ avgHours }} <span class="text-sm font-normal">h</span>
         </div>
@@ -48,14 +48,42 @@ const { records } = storeToRefs(store)
 
 let chartInstance: any = null
 
+
+// 1. 当月专注时长（从当月1号到最新一天）
+const totalHours = computed(() => {
+  if (!records.value.length) return '0.0'
+  
+  const now = new Date()
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const firstDayISO = firstDayOfMonth.toISOString().split('T')[0]
+  
+  return records.value
+    .filter((r: any) => r.date >= firstDayISO!)
+    .reduce((sum: number, r: any) => sum + Number(r.hours), 0)
+    .toFixed(1)
+})
+
+// 2. 本周平均专注时间（从周一到当前日期）
+const avgHours = computed(() => {
+  if (!records.value.length) return '0.0'
+  
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const thisMonday = new Date(today)
+  thisMonday.setDate(today.getDate() - today.getDay() + 1) // 计算本周一
+  const mondayISO = thisMonday.toISOString().split('T')[0]
+  
+  const weeklyRecords = records.value.filter((r: any) => r.date >= mondayISO!)
+  const weeklyHours = weeklyRecords.reduce((sum: number, r: any) => sum + Number(r.hours), 0)
+  const dayCount = new Set(weeklyRecords.map((r: any) => r.date)).size || 1 // 避免除以0
+  console.log(weeklyRecords, weeklyHours, dayCount);
+  
+  return (weeklyHours / dayCount).toFixed(1)
+})
+
 // 原有统计（不变）
-const totalHours = computed(() =>
-  records.value.reduce((sum: number, r: any) => sum + Number(r.hours), 0).toFixed(1),
-)
 const dayCount = computed(() => new Set(records.value.map((r: any) => r.date)).size)
-const avgHours = computed(() =>
-  dayCount.value ? (Number(totalHours.value) / dayCount.value).toFixed(1) : 0,
-)
+
 
 // === 按最近 2 周聚合（周一为每周开始）===
 const getWeeksData = () => {
@@ -76,7 +104,7 @@ const getWeeksData = () => {
       const date = new Date(weekStart)
       date.setDate(weekStart.getDate() + d)
       const isoDate = date.toISOString().split('T')[0]
-      allDates.push(isoDate)
+      allDates.push(isoDate!)
     }
   }
 
@@ -93,7 +121,7 @@ const getWeeksData = () => {
 
   for (let i = 0; i < allDates.length; i++) {
     const dateStr = allDates[i]
-    data.push(dateMap.get(dateStr) || 0)
+    data.push(dateMap.get(dateStr!) || 0)
 
     const weekIndex = Math.floor(i / 7) + 1 // 第1周、第2周
     const dayIndex = i % 7

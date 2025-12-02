@@ -29,9 +29,10 @@ export const useFocusStore = defineStore('focus', {
       if (!newRecord.isSpecialEvent) {
         newRecord.specialEventContent = ''
       }
-      this.records.push({
-        id: Date.now() + Math.random().toString(36).substr(2, 9), // 增强唯一性
+      this.records.unshift({
+         // 增强唯一性
         ...newRecord,
+        id: Date.now() + Math.random().toString(36).substr(2, 9),
       })
       this.saveToLocal()
     },

@@ -23,8 +23,8 @@
           <input
             v-model.number="form.hours"
             type="number"
-            step="0.5"
-            min="0.1"
+            step="0.1"
+            min="0"
             max="24"
             required
             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-primary focus:ring focus:ring-primary/20 p-2.5 border text-sm sm:text-base"
