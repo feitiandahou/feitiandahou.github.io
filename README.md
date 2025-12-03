@@ -3,7 +3,8 @@
 - `HomeView` 提交每日学习状态
 - `AnalysisView` 图表和数据分析
 - `HistoryView` 学习状态历史记录，支持json导入和md/json导出
-** 本项目为纯前端项目，默认mock初始数据，之后所有数据均在客户端localStorage 中存储！！仅自己可见 **
+
+***本项目为纯前端项目，默认mock初始数据，之后所有数据均在客户端localStorage 中存储！！仅自己可见***
 #### 本项目使用的技术栈
 
 - Vue 3
