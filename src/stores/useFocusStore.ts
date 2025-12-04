@@ -23,7 +23,7 @@ export const useFocusStore = defineStore('focus', {
     })(),
   }),
   actions: {
-    addRecord(record: FocusRecord) {
+    addRecord(record: Omit<FocusRecord, 'id'>) {
       const newRecord = { ...record }
       // 如果不是特殊事件，强制清空内容
       if (!newRecord.isSpecialEvent) {

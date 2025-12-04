@@ -92,21 +92,36 @@ const getWeeksData = () => {
   const weekCount = 2 // 👈 只看最近 2 周
 
   // 找到本周一
-  const thisMonday = new Date(today)
-  thisMonday.setDate(today.getDate() - today.getDay() + 1) // 周日=0 → 周一 = -day+1
+  const thisSunday = new Date(today)
+  console.log(now);
+  console.log(today);
+  
+  console.log(today.getDate());
+  console.log(today.getDay());
+  
+  
+  thisSunday.setDate(today.getDate() - today.getDay() + 0) // 周日=0 → 周日 = -day+0
+  console.log(thisSunday);
+
 
   // 构建所有日期（2周 × 7天 = 14天）
   const allDates: string[] = []
   for (let w = weekCount - 1; w >= 0; w--) {
-    const weekStart = new Date(thisMonday)
-    weekStart.setDate(thisMonday.getDate() - w * 7)
+    const weekStart = new Date(thisSunday)
+    weekStart.setDate(thisSunday.getDate() - w * 7)
     for (let d = 0; d < 7; d++) {
       const date = new Date(weekStart)
-      date.setDate(weekStart.getDate() + d)
-      const isoDate = date.toISOString().split('T')[0]
-      allDates.push(isoDate!)
+      date.setDate(Number(weekStart.getDate() + d))
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const isoDate:string = `${year}-${month}-${day}`;
+      allDates.push(isoDate)
+      if(date.getTime() === today.getTime()) break
     }
   }
+  console.log(allDates);
+  
 
   // 构建日期 → 时长映射
   const dateMap = new Map<string, number>()
@@ -115,7 +130,7 @@ const getWeeksData = () => {
   })
 
   // 生成 labels 和 data
-  const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+  const weekdays = ['周日','周一', '周二', '周三', '周四', '周五', '周六' ]
   const labels: string[] = []
   const data: number[] = []
 
@@ -134,11 +149,8 @@ const getWeeksData = () => {
 const renderChart = () => {
   const ctx = document.getElementById('focusChart')
   if (!ctx) return
-
   if (chartInstance) chartInstance.destroy()
-
   const { labels, data } = getWeeksData()
-
   chartInstance = new Chart(ctx as HTMLCanvasElement, {
     type: 'bar',
     data: {
@@ -151,8 +163,8 @@ const renderChart = () => {
           borderColor: 'rgb(99, 102, 241)',
           borderWidth: 1,
           borderRadius: 4,
-          barThickness: 16, // 稍宽一点，更易点击/查看
-          maxBarThickness: 24,
+          barThickness: 28, // 稍宽一点，更易点击/查看
+          maxBarThickness: 28
         },
       ],
     },
