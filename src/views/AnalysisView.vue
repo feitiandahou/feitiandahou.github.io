@@ -130,7 +130,7 @@ const getWeeksData = () => {
   })
 
   // 生成 labels 和 data
-  const weekdays = ['周日','周一', '周二', '周三', '周四', '周五', '周六' ]
+  const weekdays = ['日','一', '二', '三', '四', '五', '六' ]
   const labels: string[] = []
   const data: number[] = []
 
@@ -140,7 +140,7 @@ const getWeeksData = () => {
 
     const weekIndex = Math.floor(i / 7) + 1 // 第1周、第2周
     const dayIndex = i % 7
-    labels.push(`${weekIndex}-${weekdays[dayIndex]}`)
+    labels.push(`${weekdays[dayIndex]}`)
   }
 
   return { labels, data }
@@ -163,7 +163,7 @@ const renderChart = () => {
           borderColor: 'rgb(99, 102, 241)',
           borderWidth: 1,
           borderRadius: 4,
-          barThickness: 28, // 稍宽一点，更易点击/查看
+          barThickness: 15, // 稍宽一点，更易点击/查看
           maxBarThickness: 28
         },
       ],
