@@ -50,7 +50,6 @@ import { useFocusStore } from '@/stores/useFocusStore'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, watch, ref } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { log } from 'console'
 Chart.register(...registerables)
 
 const store = useFocusStore()
