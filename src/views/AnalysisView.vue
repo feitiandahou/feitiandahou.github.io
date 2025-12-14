@@ -1,5 +1,6 @@
 <template>
-  <div class="space-y-4 sm:space-y-6">
+  
+  <div class="space-y-4 sm:space-y-6" >
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 sm:p-6">
       <h2 class="text-xl sm:text-2xl font-bold mb-4 text-slate-800">专注趋势（最近2周）</h2>
       <div class="relative h-60 sm:h-80 w-full">
@@ -7,13 +8,13 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
       <div
-        class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex flex-row sm:flex-col justify-between items-center sm:items-start"
+        class="bg-orange-50 p-4 rounded-xl border border-orange-100 flex flex-row sm:flex-col justify-between items-center sm:items-start"
       >
-        <div class="text-indigo-500 text-sm font-medium">月专注时长</div>
-        <div class="text-2xl sm:text-3xl font-bold text-indigo-700">
-          {{ totalHours }} <span class="text-sm font-normal">h</span>
+        <div class="text-orange-500 text-sm font-medium">月专注时长</div>
+        <div class="text-2xl sm:text-3xl font-bold text-orange-700">
+          {{ totalMonthHours }} <span class="text-sm font-normal">h</span>
         </div>
       </div>
       <div
@@ -27,9 +28,17 @@
       <div
         class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex flex-row sm:flex-col justify-between items-center sm:items-start"
       >
-        <div class="text-emerald-500 text-sm font-medium">本周平均每日(start at SunDay)</div>
+        <div class="text-emerald-500 text-sm font-medium">本周平均每日</div>
         <div class="text-2xl sm:text-3xl font-bold text-emerald-700">
           {{ avgHours }} <span class="text-sm font-normal">h</span>
+        </div>
+      </div>
+      <div
+        class="bg-indigo-50 p-4 rounded-xl border border-indigo-100  flex flex-row sm:flex-col justify-between items-center sm:items-start"
+      >
+        <div class="text-indigo-500 text-sm font-medium">总专注时长</div>
+        <div class="text-2xl sm:text-3xl font-bold text-indigo-700">
+          {{ totalHours }} <span class="text-sm font-normal">h</span>
         </div>
       </div>
     </div>
@@ -39,18 +48,24 @@
 <script setup lang="ts">
 import { useFocusStore } from '@/stores/useFocusStore'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, watch, ref } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import { log } from 'console'
 Chart.register(...registerables)
 
 const store = useFocusStore()
 const { records } = storeToRefs(store)
 
+
 let chartInstance: any = null
 
-
-// 1. 当月专注时长（从当月1号到最新一天）
+//0. 总专注时长（从记录开始到最新一天）
 const totalHours = computed(() => {
+  if(!records.value.length) return '0.0'
+  return records.value.reduce((sum: number, r: any) => sum + Number(r.hours), 0).toFixed(1)
+})
+// 1. 当月专注时长（从当月1号到最新一天）
+const totalMonthHours = computed(() => {
   if (!records.value.length) return '0.0'
   
   const now = new Date()
@@ -76,7 +91,6 @@ const avgHours = computed(() => {
   const weeklyRecords = records.value.filter((r: any) => r.date >= mondayISO!)
   const weeklyHours = weeklyRecords.reduce((sum: number, r: any) => sum + Number(r.hours), 0)
   const dayCount = new Set(weeklyRecords.map((r: any) => r.date)).size || 1 // 避免除以0
-  console.log(weeklyRecords, weeklyHours, dayCount);
   
   return (weeklyHours / dayCount).toFixed(1)
 })
@@ -93,15 +107,9 @@ const getWeeksData = () => {
 
   // 找到本周一
   const thisSunday = new Date(today)
-  console.log(now);
-  console.log(today);
-  
-  console.log(today.getDate());
-  console.log(today.getDay());
   
   
   thisSunday.setDate(today.getDate() - today.getDay() + 0) // 周日=0 → 周日 = -day+0
-  console.log(thisSunday);
 
 
   // 构建所有日期（2周 × 7天 = 14天）
@@ -109,6 +117,7 @@ const getWeeksData = () => {
   for (let w = weekCount - 1; w >= 0; w--) {
     const weekStart = new Date(thisSunday)
     weekStart.setDate(thisSunday.getDate() - w * 7)
+    
     for (let d = 0; d < 7; d++) {
       const date = new Date(weekStart)
       date.setDate(Number(weekStart.getDate() + d))
@@ -120,15 +129,15 @@ const getWeeksData = () => {
       if(date.getTime() === today.getTime()) break
     }
   }
-  console.log(allDates);
   
 
   // 构建日期 → 时长映射
+  
   const dateMap = new Map<string, number>()
   records.value.forEach((r: any) => {
     dateMap.set(r.date, Number(r.hours))
   })
-
+  
   // 生成 labels 和 data
   const weekdays = ['日','一', '二', '三', '四', '五', '六' ]
   const labels: string[] = []
@@ -142,6 +151,8 @@ const getWeeksData = () => {
     const dayIndex = i % 7
     labels.push(`${weekdays[dayIndex]}`)
   }
+  
+
 
   return { labels, data }
 }
@@ -203,4 +214,6 @@ onMounted(() => renderChart())
 watch(records, () => renderChart(), { deep: true })
 </script>
 
-<style scoped></style>
+<style scoped>
+
+</style>

@@ -1,5 +1,30 @@
 <template>
   <div id="app" class="min-h-screen flex flex-col">
+    <Teleport to="body">
+    <Transition name="toast-fade">
+      <div
+        v-if="showNotice"
+        class="fixed top-1/4 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full px-4"
+      >
+        <div
+          class="bg-white/90 backdrop-blur-sm border border-orange-200 rounded-xl shadow-lg py-3 px-4 text-left text-lg text-slate-700 font-medium"
+        >
+          本项目为纯前端项目，默认 <strong class="text-red-500">模拟</strong> 初始数据，之后所有数据均在客户端localStorage中存储！！<strong class="text-red-500">仅自己可见</strong>
+          <br><br>
+          清除浏览器缓存会导致数据丢失，请及时备份
+          <div class="flex justify-end">
+            <button
+              aria-label="关闭通知"
+              class="mt-2 inline-block rounded-full bg-orange-500 hover:bg-orange-600 text-white text-lg px-3 py-1 transition"
+              @click="dismissNotice"
+            >
+              已了解
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
     <!-- 顶部导航 (移动端优化) -->
     <nav class="bg-white shadow-sm sticky top-0 z-50 safe-area-inset-top">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,8 +81,24 @@
     </footer>
   </div>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+  import { ref } from 'vue'
+const showNotice = ref(localStorage.getItem('dismissed-notice-v1') !== 'true')
+const dismissNotice = () => {
+  showNotice.value = false
+  localStorage.setItem('dismissed-notice-v1', 'true')
+}
+</script>
 
-<style>
+<style scoped>
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -10px); /* 从上滑入/滑出 */
+}
 
 </style>

@@ -29,88 +29,113 @@
     </div>
 
     <div v-if="mode === 'timer'" class="presets">
-      <span @click="setCustomTime(60)">1h</span>
-      <span @click="setCustomTime(120)">2h</span>
-      <span @click="setCustomTime(240)">4h</span>
+      <span @click="setPreset(25)">25min</span>
+      <span @click="setPreset(120)">2h</span>
+      <span @click="setPreset(240)">4h</span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
-
+import { ref, computed, onUnmounted} from 'vue'
+const DEFAULT_TARGET_SECONDS = 45 * 60
 // 状态
 const mode = ref('timer') // 'timer' (倒计时) | 'stopwatch' (秒表)
-const totalSeconds = ref(120 * 60) // 默认 25 分钟
+const targetTotalSeconds = ref(DEFAULT_TARGET_SECONDS) // 默认 45 分钟
+const elapsedSeconds = ref(0)
 const isRunning = ref(false)
-let intervalId = null
+const startTime = ref(null)
+let rafId = null // requestAnimationFrame ID
+let lastSecond = -1
+
+
+
+const totalSeconds = computed(() => {
+  if (mode.value === 'timer') {
+    return Math.max(0, targetTotalSeconds.value - elapsedSeconds.value)
+  }
+  return elapsedSeconds.value
+})
 
 // 格式化时间显示 (MM:SS)
 const formattedTime = computed(() => {
-  const m = Math.floor(totalSeconds.value / 60)
-  const s = totalSeconds.value % 60
+  const total = totalSeconds.value
+  const m = Math.floor(total / 60)
+  const s = total % 60
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 })
-
 // 切换模式
 const switchMode = (newMode) => {
   pause()
   mode.value = newMode
   if (newMode === 'timer') {
-    totalSeconds.value = 25 * 60
+    targetTotalSeconds.value = 25 * 60
+    elapsedSeconds.value = 0
   } else {
-    totalSeconds.value = 0
+    elapsedSeconds.value = 0
   }
 }
 
-// 设置自定义时间
-const setCustomTime = (minutes) => {
+const setPreset = (minutes) => {
   pause()
-  totalSeconds.value = minutes * 60
+  targetTotalSeconds.value = minutes * 60
+  elapsedSeconds.value = 0
+}
+const updateTimer = () => {
+  if(!isRunning.value || !startTime.value) return
+  const now = Date.now()
+  const delta = Math.floor((now - startTime.value) / 1000) // 转换为秒
+  if(delta !== lastSecond) {
+    lastSecond = delta
+    elapsedSeconds.value = delta
+  }
+  if(mode.value === 'timer' && delta >= targetTotalSeconds.value) {
+    pause()
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('专注时间到！', {
+        body: '休息一下吧~',
+        icon: '/notification.jpg'
+      })
+    }else{
+      alert('时间到！') // 这里可以换成播放声音
+    }
+    return
+  }
+  //继续下一帧
+  rafId = requestAnimationFrame(updateTimer)
 }
 
-// 开始/暂停逻辑
+const start = async () => {
+  if ('Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission()
+  }
+  isRunning.value = true
+  startTime.value = Date.now() - elapsedSeconds.value * 1000
+  rafId = requestAnimationFrame(updateTimer)
+}
+
+const pause = () => {
+  isRunning.value = false
+  if(rafId) {
+    cancelAnimationFrame(rafId)
+    rafId = null
+  }
+}
 const toggleTimer = () => {
-  if (isRunning.value) {
+  if(isRunning.value) {
     pause()
   } else {
     start()
   }
 }
 
-const start = () => {
-  isRunning.value = true
-  intervalId = setInterval(() => {
-    if (mode.value === 'timer') {
-      if (totalSeconds.value > 0) {
-        totalSeconds.value--
-      } else {
-        // 倒计时结束
-        pause()
-        alert('时间到！') // 这里可以换成播放声音
-      }
-    } else {
-      // 秒表模式
-      totalSeconds.value++
-    }
-  }, 1000)
-}
-
-const pause = () => {
-  isRunning.value = false
-  if (intervalId) clearInterval(intervalId)
-}
-
 const resetTimer = () => {
   pause()
-  if (mode.value === 'timer') {
-    totalSeconds.value = 25 * 60
-  } else {
-    totalSeconds.value = 0
+  elapsedSeconds.value = 0
+  if(mode.value === 'timer'){
+    targetTotalSeconds.value = 45 * 60
   }
 }
-
-// 组件销毁时清除定时器，防止内存泄漏
 onUnmounted(() => {
   pause()
 })
